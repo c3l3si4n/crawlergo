@@ -18,6 +18,7 @@ import (
 	"os/signal"
 	"strings"
 	"sync"
+	"net/url"
 )
 
 /**
@@ -90,7 +91,7 @@ func main() {
 			&cli.StringFlag{
 				Name:        "custom-headers",
 				Usage:       "add additional `Headers` to each request. The input string will be called json.Unmarshal",
-				Value:       fmt.Sprintf(`{"Spider-Name": "crawlergo", "User-Agent": "%s"}`, config.DefaultUA),
+				Value:       fmt.Sprintf(`{"User-Agent": "%s"}`, config.DefaultUA),
 				Destination: &taskConfig.ExtraHeadersString,
 			},
 			&cli.StringFlag{
@@ -380,7 +381,13 @@ func parseCustomFormValues(customData []string) (map[string]string, error) {
 			return nil, errors.New("not allowed form key: " + key)
 		}
 		value := keyValue[1]
-		parsedData[key] = value
+		decodedValue, err := url.QueryUnescape(value)
+		if err != nil {
+			log.Fatal(err)
+			return nil, errors.New("[patch] Error on url decoding: " + key)
+		}
+	
+		parsedData[key] = decodedValue
 	}
 	return parsedData, nil
 }
